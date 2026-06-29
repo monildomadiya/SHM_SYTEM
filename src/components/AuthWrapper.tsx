@@ -189,7 +189,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
               onChange={e => handleChange(index, e.target.value)}
               onKeyDown={e => handleKeyDown(index, e)}
               onPaste={handlePaste}
-              className={\`otp-input \${error ? 'error' : ''}\`}
+              className={`otp-input ${error ? 'error' : ''}`}
             />
           ))}
         </div>
