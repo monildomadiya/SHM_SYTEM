@@ -1371,7 +1371,7 @@ export default function OrdersPage() {
               <div style={{paddingBottom: '32px', borderBottom: '2px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
                 
                 <div style={{display: 'flex', alignItems: 'center'}}>
-                  <img src="/black-logo.png" alt="SHM Logo" style={{height: '70px', width: 'auto', objectFit: 'contain'}} />
+                  <img src="/black-logo.png" alt="SHM Logo" style={{height: '100px', width: 'auto', objectFit: 'contain'}} />
                 </div>
 
                 <div style={{textAlign: 'right'}}>
