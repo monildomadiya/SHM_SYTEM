@@ -1124,7 +1124,7 @@ export default function OrdersPage() {
         styles: { fontSize: 8, cellPadding: 1.5, minCellHeight: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
         columnStyles: {
           0: { cellWidth: 15, halign: 'center' },
-          ...(!showPartNo ? { 2: { cellWidth: 25, halign: 'right', fontStyle: 'bold' } } : { 2: { cellWidth: 40, font: 'courier' }, 3: { cellWidth: 25, halign: 'right', fontStyle: 'bold' } })
+          ...(!showPartNo ? { 2: { cellWidth: 25, halign: 'center', fontStyle: 'bold' } } : { 2: { cellWidth: 40, font: 'courier', halign: 'center' }, 3: { cellWidth: 25, halign: 'center', fontStyle: 'bold' } })
         }
       });
       
@@ -1440,8 +1440,8 @@ export default function OrdersPage() {
                     <tr>
                       <th style={{padding: '6px', textAlign: 'center', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '40px'}}>Sl No</th>
                       <th style={{padding: '6px', textAlign: 'left', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1'}}>Item Description</th>
-                      {showPartNo && <th style={{padding: '6px', textAlign: 'left', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '150px'}}>Part No</th>}
-                      <th style={{padding: '6px', textAlign: 'right', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '80px'}}>Quantity</th>
+                      {showPartNo && <th style={{padding: '6px', textAlign: 'center', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '150px'}}>Part No</th>}
+                      <th style={{padding: '6px', textAlign: 'center', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '80px'}}>Quantity</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1449,8 +1449,8 @@ export default function OrdersPage() {
                       <tr key={index}>
                         <td style={{padding: '6px', fontSize: '0.9rem', color: '#334155', border: '1px solid #cbd5e1', textAlign: 'center'}}>{index + 1}</td>
                         <td style={{padding: '6px', fontSize: '0.95rem', color: '#0f172a', border: '1px solid #cbd5e1'}}>{item.name}</td>
-                        {showPartNo && <td style={{padding: '6px', fontSize: '0.9rem', color: '#475569', fontFamily: 'monospace', border: '1px solid #cbd5e1'}}>{item.partNo && item.partNo !== 'N/A' ? item.partNo : '-'}</td>}
-                        <td style={{padding: '6px', fontSize: '1rem', color: '#0f172a', fontWeight: 700, textAlign: 'right', border: '1px solid #cbd5e1'}}>{item.quantity}</td>
+                        {showPartNo && <td style={{padding: '6px', fontSize: '0.9rem', color: '#475569', fontFamily: 'monospace', border: '1px solid #cbd5e1', textAlign: 'center'}}>{item.partNo && item.partNo !== 'N/A' ? item.partNo : '-'}</td>}
+                        <td style={{padding: '6px', fontSize: '1rem', color: '#0f172a', fontWeight: 700, textAlign: 'center', border: '1px solid #cbd5e1'}}>{item.quantity}</td>
                       </tr>
                     ))}
                     {(!viewingOrder.items || viewingOrder.items.length === 0) && (
