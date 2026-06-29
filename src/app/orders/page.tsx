@@ -1083,22 +1083,25 @@ export default function OrdersPage() {
       pdf.setTextColor(15, 23, 42);
       pdf.text("PURCHASE ORDER", 196, 22, { align: 'right' });
       
-      pdf.setFontSize(14);
-      pdf.text(viewingOrder.companyName, 196, 30, { align: 'right' });
-
       const orderDate = new Date(viewingOrder.timestamp).toLocaleDateString('en-GB');
       pdf.setTextColor(100, 116, 139);
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`DATE: `, 160, 38, { align: 'right' });
+      pdf.text(`DATE: `, 160, 30, { align: 'right' });
       pdf.setTextColor(15, 23, 42);
       pdf.setFont("helvetica", "bold");
-      pdf.text(orderDate, 196, 38, { align: 'right' });
+      pdf.text(orderDate, 196, 30, { align: 'right' });
 
       // Separator Line
       pdf.setDrawColor(241, 245, 249);
       pdf.setLineWidth(1);
-      pdf.line(14, 46, 196, 46);
+      pdf.line(14, 38, 196, 38);
+
+      // Supplier Info
+      pdf.setFontSize(16);
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(viewingOrder.companyName, 14, 48);
 
       // Table Data
       const tableColumn = ["Sl No", "Item Description"];
@@ -1123,8 +1126,8 @@ export default function OrdersPage() {
       autoTable(pdf, {
         head: [tableColumn],
         body: tableRows,
-        startY: 54,
-        margin: { top: 54, left: 14, right: 14, bottom: 35 },
+        startY: 56,
+        margin: { top: 56, left: 14, right: 14, bottom: 35 },
         theme: 'grid',
         headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 9, cellPadding: 3, halign: 'center' },
         styles: { fontSize: 9, cellPadding: 3, minCellHeight: 6, lineColor: [203, 213, 225], lineWidth: 0.2, textColor: [15, 23, 42] },
@@ -1424,11 +1427,15 @@ export default function OrdersPage() {
 
                 <div style={{textAlign: 'right'}}>
                   <div style={{fontSize: '2.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '8px'}}>PURCHASE ORDER</div>
-                  <div style={{fontWeight: 800, fontSize: '1.4rem', color: '#0f172a', marginBottom: '12px'}}>{viewingOrder.companyName}</div>
                   <div style={{fontSize: '0.95rem', color: '#64748b', fontWeight: 600, display: 'flex', justifyContent: 'flex-end', gap: '8px'}}>
                     <span>DATE:</span> <span style={{color: '#0f172a'}}>{new Date(viewingOrder.timestamp).toLocaleDateString('en-GB')}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Supplier Info */}
+              <div style={{marginTop: '24px', marginBottom: '24px'}}>
+                <div style={{fontWeight: 800, fontSize: '1.6rem', color: '#0f172a'}}>{viewingOrder.companyName}</div>
               </div>
 
               {/* Item Table */}
