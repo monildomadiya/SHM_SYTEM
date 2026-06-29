@@ -977,6 +977,7 @@ export default function OrdersPage() {
   
   // Formal Viewer State
   const [viewingOrder, setViewingOrder] = useState<CompanyOrder | null>(null);
+  const [showPartNo, setShowPartNo] = useState(true);
 
   useEffect(() => {
     const unsub = onValue(ref(db, 'companyOrders'), (snapshot) => {
@@ -1094,16 +1095,21 @@ export default function OrdersPage() {
       pdf.line(45, 33, 210 - 14, 33);
       
       // Table Data
-      const tableColumn = ["Sl No", "Item Description", "Part No", "Quantity"];
+      const tableColumn = ["Sl No", "Item Description"];
+      if (showPartNo) tableColumn.push("Part No");
+      tableColumn.push("Quantity");
+      
       const tableRows: any[] = [];
       
       viewingOrder.items?.forEach((item, index) => {
         const rowData = [
           index + 1,
           item.name,
-          item.partNo && item.partNo !== 'N/A' ? item.partNo : '-',
-          item.quantity
         ];
+        if (showPartNo) {
+          rowData.push(item.partNo && item.partNo !== 'N/A' ? item.partNo : '-');
+        }
+        rowData.push(item.quantity);
         tableRows.push(rowData);
       });
       
@@ -1115,11 +1121,10 @@ export default function OrdersPage() {
         margin: { top: 35, left: 10, right: 10, bottom: 5 },
         theme: 'grid',
         headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 9, cellPadding: 2 },
-        styles: { fontSize: 8, cellPadding: 1.5, minCellHeight: 4 },
+        styles: { fontSize: 8, cellPadding: 1.5, minCellHeight: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
         columnStyles: {
           0: { cellWidth: 15, halign: 'center' },
-          2: { cellWidth: 40, font: 'courier' },
-          3: { cellWidth: 25, halign: 'right', fontStyle: 'bold' }
+          ...(!showPartNo ? { 2: { cellWidth: 25, halign: 'right', fontStyle: 'bold' } } : { 2: { cellWidth: 40, font: 'courier' }, 3: { cellWidth: 25, halign: 'right', fontStyle: 'bold' } })
         }
       });
       
@@ -1358,10 +1363,16 @@ export default function OrdersPage() {
                 <h2 style={{margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em'}}>Order Preview</h2>
                 <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace', fontWeight: 500}}>PO-{(viewingOrder.id.split('-')[0] || viewingOrder.id).substring(0,8).toUpperCase()}</div>
               </div>
+              <div style={{display: 'flex', alignItems: 'center', marginLeft: '24px', paddingLeft: '24px', borderLeft: '1px solid var(--border)'}}>
+                <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600}}>
+                  <input type="checkbox" checked={showPartNo} onChange={e => setShowPartNo(e.target.checked)} style={{width: '18px', height: '18px', cursor: 'pointer'}} />
+                  Include Part Number in PDF
+                </label>
+              </div>
             </div>
 
             <div style={{display: 'flex', gap: '16px'}}>
-              <button className="action-btn" style={{padding: '10px 24px', fontSize: '0.95rem', fontWeight: 600, background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '10px'}} onClick={() => { setEditingOrder(viewingOrder); }}>
+              <button className="action-btn" style={{padding: '10px 24px', fontSize: '0.95rem', fontWeight: 600, background: 'var(--bg-surface)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '10px'}} onClick={() => { setEditingOrder(viewingOrder); setViewingOrder(null); }}>
                 Edit Order
               </button>
               <button className="action-btn" style={{padding: '10px 24px', fontSize: '0.95rem', fontWeight: 600, background: 'var(--bg-surface)', color: 'var(--danger)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '10px'}} onClick={() => { deleteOrder(viewingOrder.id); setViewingOrder(null); }}>
@@ -1390,10 +1401,10 @@ export default function OrdersPage() {
               width: '100%', 
               maxWidth: '850px', 
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
-              overflow: 'hidden', 
               display: 'flex', 
               flexDirection: 'column', 
               minHeight: '1100px',
+              height: 'max-content',
               padding: '48px'
             }}>
               
@@ -1423,28 +1434,28 @@ export default function OrdersPage() {
               </div>
 
               {/* Item Table */}
-              <div style={{flex: 1}}>
+              <div style={{flex: 1, overflow: 'visible'}}>
                 <table style={{width: '100%', borderCollapse: 'collapse', marginTop: '16px'}}>
                   <thead>
-                    <tr style={{borderBottom: '2px solid #cbd5e1'}}>
-                      <th style={{padding: '12px 8px', textAlign: 'left', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', width: '60px'}}>#</th>
-                      <th style={{padding: '12px 8px', textAlign: 'left', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase'}}>Item Description</th>
-                      <th style={{padding: '12px 8px', textAlign: 'left', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', width: '150px'}}>Part Number</th>
-                      <th style={{padding: '12px 8px', textAlign: 'right', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', width: '100px'}}>Qty</th>
+                    <tr>
+                      <th style={{padding: '6px', textAlign: 'center', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '40px'}}>Sl No</th>
+                      <th style={{padding: '6px', textAlign: 'left', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1'}}>Item Description</th>
+                      {showPartNo && <th style={{padding: '6px', textAlign: 'left', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '150px'}}>Part No</th>}
+                      <th style={{padding: '6px', textAlign: 'right', fontSize: '0.85rem', color: '#ffffff', backgroundColor: '#475569', border: '1px solid #cbd5e1', width: '80px'}}>Quantity</th>
                     </tr>
                   </thead>
                   <tbody>
                     {viewingOrder.items?.map((item, index) => (
-                      <tr key={index} style={{borderBottom: '1px solid #e2e8f0'}}>
-                        <td style={{padding: '20px 8px', fontSize: '0.95rem', color: '#64748b'}}>{index + 1}</td>
-                        <td style={{padding: '20px 8px', fontSize: '1.05rem', color: '#0f172a', fontWeight: 600}}>{item.name}</td>
-                        <td style={{padding: '20px 8px', fontSize: '0.95rem', color: '#475569', fontFamily: 'monospace'}}>{item.partNo && item.partNo !== 'N/A' ? item.partNo : '-'}</td>
-                        <td style={{padding: '20px 8px', fontSize: '1.2rem', color: '#0f172a', fontWeight: 800, textAlign: 'right'}}>{item.quantity}</td>
+                      <tr key={index}>
+                        <td style={{padding: '6px', fontSize: '0.9rem', color: '#334155', border: '1px solid #cbd5e1', textAlign: 'center'}}>{index + 1}</td>
+                        <td style={{padding: '6px', fontSize: '0.95rem', color: '#0f172a', border: '1px solid #cbd5e1'}}>{item.name}</td>
+                        {showPartNo && <td style={{padding: '6px', fontSize: '0.9rem', color: '#475569', fontFamily: 'monospace', border: '1px solid #cbd5e1'}}>{item.partNo && item.partNo !== 'N/A' ? item.partNo : '-'}</td>}
+                        <td style={{padding: '6px', fontSize: '1rem', color: '#0f172a', fontWeight: 700, textAlign: 'right', border: '1px solid #cbd5e1'}}>{item.quantity}</td>
                       </tr>
                     ))}
                     {(!viewingOrder.items || viewingOrder.items.length === 0) && (
                       <tr>
-                        <td colSpan={4} style={{textAlign: 'center', padding: '48px', color: '#94a3b8'}}>No items in this order.</td>
+                        <td colSpan={showPartNo ? 4 : 3} style={{textAlign: 'center', padding: '24px', color: '#94a3b8', border: '1px solid #cbd5e1'}}>No items in this order.</td>
                       </tr>
                     )}
                   </tbody>
