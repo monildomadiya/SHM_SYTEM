@@ -1382,49 +1382,69 @@ export default function OrdersPage() {
 
           {/* Document Preview Area */}
           <div style={{flex: 1, overflowY: 'auto', padding: '40px 20px', display: 'flex', justifyContent: 'center', background: 'radial-gradient(circle at center, var(--bg-surface) 0%, var(--bg-base) 100%)'}}>
-            <div id="purchase-order-pdf-content" style={{background: 'var(--bg-surface)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', width: '100%', maxWidth: '850px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: '800px'}}>
+            <div id="purchase-order-pdf-content" style={{
+              background: '#ffffff', 
+              color: '#000000',
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px', 
+              width: '100%', 
+              maxWidth: '850px', 
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
+              overflow: 'hidden', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              minHeight: '1100px',
+              padding: '48px'
+            }}>
               
               {/* Premium Document Header */}
-              <div style={{padding: '48px 48px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, transparent 100%)'}}>
+              <div style={{paddingBottom: '32px', borderBottom: '2px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
                 
-                <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
-                  <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: '12px' }}>
-                    <img src="/black-logo.png" alt="SHM Logo" style={{height: '64px', width: 'auto', objectFit: 'contain'}} />
-                  </div>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                  <img src="/black-logo.png" alt="SHM Logo" style={{height: '70px', width: 'auto', objectFit: 'contain'}} />
                 </div>
 
                 <div style={{textAlign: 'right'}}>
-                  <div style={{fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '4px'}}>Order Date</div>
-                  <div style={{fontWeight: 600, fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '16px'}}>{new Date(viewingOrder.timestamp).toLocaleDateString('en-GB')}</div>
-                  
-                  <div style={{fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '4px'}}>Supplier</div>
-                  <div style={{fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary)'}}>{viewingOrder.companyName}</div>
+                  <div style={{fontSize: '2.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '12px'}}>PURCHASE ORDER</div>
+                  <div style={{fontSize: '0.95rem', color: '#64748b', fontWeight: 600, display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '6px'}}>
+                    <span>PO NO:</span> <span style={{color: '#0f172a'}}>PO-{(viewingOrder.id.split('-')[0] || viewingOrder.id).substring(0,8).toUpperCase()}</span>
+                  </div>
+                  <div style={{fontSize: '0.95rem', color: '#64748b', fontWeight: 600, display: 'flex', justifyContent: 'flex-end', gap: '8px'}}>
+                    <span>DATE:</span> <span style={{color: '#0f172a'}}>{new Date(viewingOrder.timestamp).toLocaleDateString('en-GB')}</span>
+                  </div>
                 </div>
               </div>
 
+              {/* Supplier Info */}
+              <div style={{marginTop: '40px', marginBottom: '40px'}}>
+                <div style={{fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, marginBottom: '8px'}}>To Supplier:</div>
+                <div style={{fontWeight: 800, fontSize: '1.6rem', color: '#0f172a'}}>{viewingOrder.companyName}</div>
+                <div style={{fontSize: '1rem', color: '#475569', marginTop: '8px', fontWeight: 500}}>Urgency: <span style={{fontWeight: 700, color: viewingOrder.urgency === 'Critical' ? '#ef4444' : viewingOrder.urgency === 'Urgent' ? '#f59e0b' : '#10b981'}}>{viewingOrder.urgency || 'Normal'}</span></div>
+              </div>
+
               {/* Item Table */}
-              <div style={{overflowY: 'visible', flex: 1, padding: '0 24px'}}>
-                <table className="ledger-table" style={{width: '100%', margin: '24px 0'}}>
+              <div style={{flex: 1}}>
+                <table style={{width: '100%', borderCollapse: 'collapse', marginTop: '16px'}}>
                   <thead>
-                    <tr>
-                      <th style={{width: '60px', padding: '16px', background: 'rgba(255,255,255,0.03)', borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px', borderBottom: 'none'}}>#</th>
-                      <th style={{padding: '16px', background: 'rgba(255,255,255,0.03)', borderBottom: 'none'}}>Item Description</th>
-                      <th style={{padding: '16px', background: 'rgba(255,255,255,0.03)', borderBottom: 'none'}}>Part Number</th>
-                      <th style={{textAlign: 'right', padding: '16px', background: 'rgba(255,255,255,0.03)', borderTopRightRadius: '8px', borderBottomRightRadius: '8px', borderBottom: 'none'}}>Quantity</th>
+                    <tr style={{borderBottom: '2px solid #cbd5e1'}}>
+                      <th style={{padding: '12px 8px', textAlign: 'left', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', width: '60px'}}>#</th>
+                      <th style={{padding: '12px 8px', textAlign: 'left', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase'}}>Item Description</th>
+                      <th style={{padding: '12px 8px', textAlign: 'left', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', width: '150px'}}>Part Number</th>
+                      <th style={{padding: '12px 8px', textAlign: 'right', fontSize: '0.85rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', width: '100px'}}>Qty</th>
                     </tr>
                   </thead>
                   <tbody>
                     {viewingOrder.items?.map((item, index) => (
-                      <tr key={index} style={{borderBottom: '1px solid rgba(255,255,255,0.03)'}}>
-                        <td style={{color: 'var(--text-muted)', padding: '20px 16px', fontSize: '0.9rem'}}>{index + 1}</td>
-                        <td style={{fontWeight: 600, color: 'var(--text-main)', padding: '20px 16px', fontSize: '0.95rem'}}>{item.name}</td>
-                        <td style={{color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '0.9rem', padding: '20px 16px'}}>{item.partNo && item.partNo !== 'N/A' ? <span style={{background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '4px'}}>{item.partNo}</span> : '-'}</td>
-                        <td style={{textAlign: 'right', fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem', padding: '20px 16px'}}>{item.quantity}</td>
+                      <tr key={index} style={{borderBottom: '1px solid #e2e8f0'}}>
+                        <td style={{padding: '20px 8px', fontSize: '0.95rem', color: '#64748b'}}>{index + 1}</td>
+                        <td style={{padding: '20px 8px', fontSize: '1.05rem', color: '#0f172a', fontWeight: 600}}>{item.name}</td>
+                        <td style={{padding: '20px 8px', fontSize: '0.95rem', color: '#475569', fontFamily: 'monospace'}}>{item.partNo && item.partNo !== 'N/A' ? item.partNo : '-'}</td>
+                        <td style={{padding: '20px 8px', fontSize: '1.2rem', color: '#0f172a', fontWeight: 800, textAlign: 'right'}}>{item.quantity}</td>
                       </tr>
                     ))}
                     {(!viewingOrder.items || viewingOrder.items.length === 0) && (
                       <tr>
-                        <td colSpan={4} style={{textAlign: 'center', padding: '48px', color: 'var(--text-muted)'}}>No items in this order.</td>
+                        <td colSpan={4} style={{textAlign: 'center', padding: '48px', color: '#94a3b8'}}>No items in this order.</td>
                       </tr>
                     )}
                   </tbody>
@@ -1432,12 +1452,15 @@ export default function OrdersPage() {
               </div>
 
               {/* Document Footer */}
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px 48px', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'var(--bg-surface)'}}>
-                <div style={{fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 500}}>
-                  Total Items: <span style={{fontWeight: 800, color: 'var(--text-main)', fontSize: '1.1rem', marginLeft: '6px'}}>{viewingOrder.items?.length || 0}</span>
+              <div style={{marginTop: 'auto', paddingTop: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end'}}>
+                <div style={{padding: '20px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'inline-block'}}>
+                  <div style={{fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px'}}>Order Summary</div>
+                  <div style={{fontSize: '1.2rem', color: '#0f172a', fontWeight: 800}}>Total Items: {viewingOrder.items?.length || 0}</div>
                 </div>
-                <div>
-                   <span className={`badge badge-${viewingOrder.status === 'Pending' ? 'warning' : viewingOrder.status === 'Sent' ? 'primary' : 'success'}`} style={{fontSize: '0.85rem', padding: '6px 14px', borderRadius: '20px', letterSpacing: '0.05em', textTransform: 'uppercase'}}>{viewingOrder.status} ORDER</span>
+                
+                <div style={{textAlign: 'center', width: '220px'}}>
+                  <div style={{borderBottom: '1px solid #cbd5e1', height: '40px', marginBottom: '12px'}}></div>
+                  <div style={{fontSize: '0.85rem', color: '#64748b', fontWeight: 600}}>Authorized Signature</div>
                 </div>
               </div>
             </div>
