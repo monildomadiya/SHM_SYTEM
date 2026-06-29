@@ -1083,48 +1083,25 @@ export default function OrdersPage() {
       pdf.setTextColor(15, 23, 42);
       pdf.text("PURCHASE ORDER", 196, 22, { align: 'right' });
       
-      pdf.setFontSize(10);
-      pdf.setTextColor(100, 116, 139);
-      pdf.setFont("helvetica", "normal");
-      const poNo = `PO-${(viewingOrder.id.split('-')[0] || viewingOrder.id).substring(0,8).toUpperCase()}`;
-      pdf.text(`PO NO: `, 160, 28, { align: 'right' });
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(poNo, 196, 28, { align: 'right' });
-
       const orderDate = new Date(viewingOrder.timestamp).toLocaleDateString('en-GB');
       pdf.setTextColor(100, 116, 139);
+      pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`DATE: `, 160, 34, { align: 'right' });
+      pdf.text(`DATE: `, 160, 30, { align: 'right' });
       pdf.setTextColor(15, 23, 42);
       pdf.setFont("helvetica", "bold");
-      pdf.text(orderDate, 196, 34, { align: 'right' });
+      pdf.text(orderDate, 196, 30, { align: 'right' });
 
       // Separator Line
       pdf.setDrawColor(241, 245, 249);
       pdf.setLineWidth(1);
-      pdf.line(14, 42, 196, 42);
+      pdf.line(14, 38, 196, 38);
 
       // Supplier Info
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 116, 139);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("TO SUPPLIER:", 14, 52);
-      
       pdf.setFontSize(16);
       pdf.setTextColor(15, 23, 42);
-      pdf.text(viewingOrder.companyName, 14, 60);
-
-      pdf.setFontSize(10);
-      pdf.setTextColor(71, 85, 105);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(`Urgency: `, 14, 68);
-      
-      if (viewingOrder.urgency === 'Critical') pdf.setTextColor(239, 68, 68);
-      else if (viewingOrder.urgency === 'Urgent') pdf.setTextColor(245, 158, 11);
-      else pdf.setTextColor(16, 185, 129);
       pdf.setFont("helvetica", "bold");
-      pdf.text(viewingOrder.urgency || 'Normal', 29, 68);
+      pdf.text(viewingOrder.companyName, 14, 50);
 
       // Table Data
       const tableColumn = ["Sl No", "Item Description"];
@@ -1149,8 +1126,8 @@ export default function OrdersPage() {
       autoTable(pdf, {
         head: [tableColumn],
         body: tableRows,
-        startY: 75,
-        margin: { top: 75, left: 14, right: 14, bottom: 35 },
+        startY: 58,
+        margin: { top: 58, left: 14, right: 14, bottom: 35 },
         theme: 'grid',
         headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 9, cellPadding: 3, halign: 'center' },
         styles: { fontSize: 9, cellPadding: 3, minCellHeight: 6, lineColor: [203, 213, 225], lineWidth: 0.2, textColor: [15, 23, 42] },
@@ -1170,25 +1147,14 @@ export default function OrdersPage() {
 
       const actualFooterY = footerY > 275 ? 250 : footerY;
 
-      // Footer - Summary Box
-      pdf.setFillColor(248, 250, 252);
-      pdf.setDrawColor(226, 232, 240);
-      pdf.roundedRect(14, actualFooterY, 60, 22, 2, 2, 'FD');
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 116, 139);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("ORDER SUMMARY", 18, actualFooterY + 8);
-      pdf.setFontSize(12);
-      pdf.setTextColor(15, 23, 42);
-      pdf.text(`Total Items: ${viewingOrder.items?.length || 0}`, 18, actualFooterY + 17);
-
       // Footer - Signature
-      pdf.setDrawColor(203, 213, 225);
+      pdf.setDrawColor(15, 23, 42);
+      pdf.setLineWidth(0.5);
       pdf.line(136, actualFooterY + 12, 196, actualFooterY + 12);
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 116, 139);
+      pdf.setFontSize(10);
+      pdf.setTextColor(15, 23, 42);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Authorized Signature", 166, actualFooterY + 17, { align: 'center' });
+      pdf.text("AUTHORIZED SIGNATURE", 166, actualFooterY + 18, { align: 'center' });
       
       pdf.save(`PO-${viewingOrder.companyName.replace(/[^a-z0-9]/gi, '_')}.pdf`);
 
@@ -1423,7 +1389,6 @@ export default function OrdersPage() {
               </button>
               <div>
                 <h2 style={{margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em'}}>Order Preview</h2>
-                <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'monospace', fontWeight: 500}}>PO-{(viewingOrder.id.split('-')[0] || viewingOrder.id).substring(0,8).toUpperCase()}</div>
               </div>
               <div style={{display: 'flex', alignItems: 'center', marginLeft: '24px', paddingLeft: '24px', borderLeft: '1px solid var(--border)'}}>
                 <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-main)', fontWeight: 600}}>
@@ -1479,9 +1444,6 @@ export default function OrdersPage() {
 
                 <div style={{textAlign: 'right'}}>
                   <div style={{fontSize: '2.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '12px'}}>PURCHASE ORDER</div>
-                  <div style={{fontSize: '0.95rem', color: '#64748b', fontWeight: 600, display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '6px'}}>
-                    <span>PO NO:</span> <span style={{color: '#0f172a'}}>PO-{(viewingOrder.id.split('-')[0] || viewingOrder.id).substring(0,8).toUpperCase()}</span>
-                  </div>
                   <div style={{fontSize: '0.95rem', color: '#64748b', fontWeight: 600, display: 'flex', justifyContent: 'flex-end', gap: '8px'}}>
                     <span>DATE:</span> <span style={{color: '#0f172a'}}>{new Date(viewingOrder.timestamp).toLocaleDateString('en-GB')}</span>
                   </div>
@@ -1489,10 +1451,8 @@ export default function OrdersPage() {
               </div>
 
               {/* Supplier Info */}
-              <div style={{marginTop: '40px', marginBottom: '40px'}}>
-                <div style={{fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, marginBottom: '8px'}}>To Supplier:</div>
+              <div style={{marginTop: '24px', marginBottom: '32px'}}>
                 <div style={{fontWeight: 800, fontSize: '1.6rem', color: '#0f172a'}}>{viewingOrder.companyName}</div>
-                <div style={{fontSize: '1rem', color: '#475569', marginTop: '8px', fontWeight: 500}}>Urgency: <span style={{fontWeight: 700, color: viewingOrder.urgency === 'Critical' ? '#ef4444' : viewingOrder.urgency === 'Urgent' ? '#f59e0b' : '#10b981'}}>{viewingOrder.urgency || 'Normal'}</span></div>
               </div>
 
               {/* Item Table */}
@@ -1525,15 +1485,10 @@ export default function OrdersPage() {
               </div>
 
               {/* Document Footer */}
-              <div style={{marginTop: 'auto', paddingTop: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end'}}>
-                <div style={{padding: '20px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'inline-block'}}>
-                  <div style={{fontSize: '0.85rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px'}}>Order Summary</div>
-                  <div style={{fontSize: '1.2rem', color: '#0f172a', fontWeight: 800}}>Total Items: {viewingOrder.items?.length || 0}</div>
-                </div>
-                
-                <div style={{textAlign: 'center', width: '220px'}}>
-                  <div style={{borderBottom: '1px solid #cbd5e1', height: '40px', marginBottom: '12px'}}></div>
-                  <div style={{fontSize: '0.85rem', color: '#64748b', fontWeight: 600}}>Authorized Signature</div>
+              <div style={{marginTop: 'auto', paddingTop: '60px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
+                <div style={{textAlign: 'center', width: '250px'}}>
+                  <div style={{borderBottom: '1.5px solid #0f172a', height: '40px', marginBottom: '12px'}}></div>
+                  <div style={{fontSize: '0.95rem', color: '#0f172a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em'}}>Authorized Signature</div>
                 </div>
               </div>
             </div>
