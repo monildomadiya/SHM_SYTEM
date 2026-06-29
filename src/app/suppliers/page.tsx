@@ -161,6 +161,7 @@ export default function SuppliersPage() {
               </tbody>
             </table>
           </div>
+          </div>
           
         </div>
       </main>
