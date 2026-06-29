@@ -252,7 +252,7 @@ export default function Dashboard() {
     setSearchQuery2('');
     closeSpotlight();
     setTimeout(() => {
-      const el = document.getElementById(`product-row-${item.groupIndex}-${item.productKey}`);
+      const el = document.getElementById(`p-${item.groupIndex}-${item.productKey}`);
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 200);
   };
@@ -320,6 +320,17 @@ export default function Dashboard() {
       setFocusedCell(prev => ({ ...prev, r: visibleRows.length > 0 ? visibleRows.length - 1 : -1 }));
     }
   }, [visibleRows.length, focusedCell.r]);
+
+  // Auto-scroll when keyboard focus changes
+  useEffect(() => {
+    if (focusedCell.r >= 0 && visibleRows[focusedCell.r]) {
+      const rowId = visibleRows[focusedCell.r].id;
+      const el = document.getElementById(rowId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [focusedCell.r, visibleRows]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -626,7 +637,7 @@ export default function Dashboard() {
                         const isEditingName = editingCell?.r === index && editingCell?.c === 0;
 
                         return (
-                          <tr key={row.id} className={`ledger-row ${isExpanded ? 'expanded' : ''}`}>
+                          <tr key={row.id} id={row.id} className={`ledger-row ${isExpanded ? 'expanded' : ''}`}>
                             <td 
                               className={focusedCell.r === index && focusedCell.c === 0 ? 'cell-focused' : ''}
                               onClick={() => { setFocusedCell({r: index, c: 0}); toggleGroup(row.groupIndex); }}
@@ -675,7 +686,7 @@ export default function Dashboard() {
                         const isEditingPart = editingCell?.r === index && editingCell?.c === 1;
 
                         return (
-                          <tr key={row.id} id={`product-row-${row.groupIndex}-${row.productKey}`} className="sub-table">
+                          <tr key={row.id} id={row.id} className="sub-table">
                             <td 
                               className={focusedCell.r === index && focusedCell.c === 0 ? 'cell-focused' : ''}
                               onClick={() => setFocusedCell({r: index, c: 0})}
