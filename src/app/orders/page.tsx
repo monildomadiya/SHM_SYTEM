@@ -582,7 +582,10 @@ const TallyOrderForm = ({ onClose, inventory, suppliers, onSubmit, initialOrder 
                       <div style={{padding: '8px', borderBottom: '1px solid var(--border)', background: 'var(--bg-base)', position: 'sticky', top: 0, zIndex: 10}}>
                         <input
                           ref={companySearchInputRef}
-                          onFocus={() => setFocusedSection('company')}
+                          onFocus={(e) => {
+                            setFocusedSection('company');
+                            e.target.style.borderColor = 'var(--brand-400)';
+                          }}
                           type="text"
                           value={companySearchStr}
                           onChange={e => {
@@ -595,7 +598,6 @@ const TallyOrderForm = ({ onClose, inventory, suppliers, onSubmit, initialOrder 
                             border: '1px solid var(--border)', background: 'var(--bg-surface)',
                             outline: 'none', fontSize: '0.85rem', color: 'var(--text-main)',
                           }}
-                          onFocus={e => e.target.style.borderColor = 'var(--brand-400)'}
                           onBlur={e => e.target.style.borderColor = 'var(--border)'}
                         />
                       </div>
