@@ -1375,16 +1375,11 @@ export default function OrdersPage() {
                 </div>
 
                 <div style={{textAlign: 'right'}}>
-                  <div style={{fontSize: '2.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '8px'}}>PURCHASE ORDER</div>
+                  <div style={{fontSize: '2.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: '8px', textTransform: 'uppercase'}}>{viewingOrder.companyName}</div>
                   <div style={{fontSize: '0.95rem', color: '#64748b', fontWeight: 600, display: 'flex', justifyContent: 'flex-end', gap: '8px'}}>
                     <span>DATE:</span> <span style={{color: '#0f172a'}}>{new Date(viewingOrder.timestamp).toLocaleDateString('en-GB')}</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Supplier Info */}
-              <div style={{marginTop: '24px', marginBottom: '24px'}}>
-                <div style={{fontWeight: 800, fontSize: '1.6rem', color: '#0f172a'}}>{viewingOrder.companyName}</div>
               </div>
 
               {/* Item Table */}
