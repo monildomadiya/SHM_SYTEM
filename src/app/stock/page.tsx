@@ -427,29 +427,7 @@ export default function Dashboard() {
               <span className="breadcrumb-current">Stock Summary</span>
             </div>
           </div>
-          <div className="top-bar-right" style={{ display: 'flex', gap: '12px' }}>
-            <div className="search-container">
-              <span className="search-icon" style={{display: 'flex', alignItems: 'center'}}><Search size={16} /></span>
-              <input
-                id="searchInput"
-                type="text"
-                className="search-input"
-                placeholder="Search word 1..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="search-container">
-              <span className="search-icon" style={{display: 'flex', alignItems: 'center'}}><Search size={16} /></span>
-              <input
-                id="searchInput2"
-                type="text"
-                className="search-input"
-                placeholder="Search word 2..."
-                value={searchQuery2}
-                onChange={(e) => setSearchQuery2(e.target.value)}
-              />
-            </div>
+          <div className="top-bar-right">
             <div className="top-bar-date">{new Date().toLocaleDateString('en-GB')}</div>
             <div className="user-profile"><div className="avatar">A</div></div>
           </div>
@@ -466,6 +444,39 @@ export default function Dashboard() {
               <kbd style={{background: 'var(--gray-100)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', border: '1px solid var(--border)'}}>Enter</kbd> edit &nbsp;·&nbsp;
               <kbd style={{background: 'var(--gray-100)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace', border: '1px solid var(--border)'}}>Del</kbd> delete
             </div>
+          </div>
+
+          {/* Advanced Search Bar */}
+          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: 'var(--shadow-xs)', flexWrap: 'wrap' }}>
+            <Search size={15} style={{ color: '#94a3b8', flexShrink: 0 }} />
+            <input
+              id="searchInput"
+              type="text"
+              className="search-input"
+              placeholder="Keyword 1 (e.g. Bulb)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ flex: 1, minWidth: '140px', maxWidth: '220px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 12px', fontSize: '0.875rem', outline: 'none', color: '#0f172a' }}
+            />
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#6366f1', background: '#ede9fe', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.05em' }}>AND</span>
+            <input
+              id="searchInput2"
+              type="text"
+              className="search-input"
+              placeholder="Keyword 2 (e.g. 12v)"
+              value={searchQuery2}
+              onChange={(e) => setSearchQuery2(e.target.value)}
+              style={{ flex: 1, minWidth: '140px', maxWidth: '220px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 12px', fontSize: '0.875rem', outline: 'none', color: '#0f172a' }}
+            />
+            {(searchQuery || searchQuery2) && (
+              <>
+                <div style={{ height: '20px', width: '1px', background: '#e2e8f0' }} />
+                <span style={{ fontSize: '0.8rem', color: '#6366f1', fontWeight: 700 }}>
+                  {visibleRows.filter(r => r.type === 'product').length} products found
+                </span>
+                <button onClick={() => { setSearchQuery(''); setSearchQuery2(''); }} style={{ background: '#fee2e2', border: 'none', color: '#ef4444', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>Clear ×</button>
+              </>
+            )}
           </div>
 
           <div className="stat-grid">
