@@ -1050,115 +1050,64 @@ export default function OrdersPage() {
 
   const generatePDF = async (shareWhatsApp = false) => {
     if (!viewingOrder) return;
-
+    
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      // Add Logo at top left
-      try {
-        const logoImg = new window.Image();
-        logoImg.src = '/black-logo.png';
-        await new Promise((resolve, reject) => {
-          logoImg.onload = resolve;
-          logoImg.onerror = reject;
-        });
-        const imgWidth = 35;
-        const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        const canvas = document.createElement('canvas');
-        canvas.width = logoImg.naturalWidth;
-        canvas.height = logoImg.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(logoImg, 0, 0);
-          const base64data = canvas.toDataURL('image/png');
-          pdf.addImage(base64data, 'PNG', 14, 15, imgWidth, imgHeight);
-        }
-      } catch (e) {
-        console.error("Logo failed to load for PDF", e);
+      const element = document.getElementById('purchase-order-pdf-content');
+      if (!element) {
+        alert("Preview element not found!");
+        return;
       }
 
-      // Title & Order Info (Right aligned)
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(22);
-      pdf.setTextColor(15, 23, 42);
-      pdf.text("PURCHASE ORDER", 196, 22, { align: 'right' });
+      // Convert HTML preview exactly as seen to a canvas
+      const canvas = await html2canvas(element, { 
+        scale: 2, 
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+      // A4 dimensions in mm
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      
+      const imgWidth = pdfWidth;
+      let imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let finalWidth = imgWidth;
+      let finalHeight = imgHeight;
+      
+      // Force it to fit on a single page if it's too long
+      if (imgHeight > pdfHeight) {
+        finalHeight = pdfHeight;
+        finalWidth = (canvas.width * finalHeight) / canvas.height;
+      }
+      
+      // Center horizontally if scaled down
+      const xOffset = (pdfWidth - finalWidth) / 2;
+      
+      pdf.addImage(imgData, 'JPEG', xOffset, 0, finalWidth, finalHeight);
       
       const orderDate = new Date(viewingOrder.timestamp).toLocaleDateString('en-GB');
-      pdf.setTextColor(100, 116, 139);
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(`DATE: `, 160, 30, { align: 'right' });
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(orderDate, 196, 30, { align: 'right' });
-
-      // Separator Line
-      pdf.setDrawColor(241, 245, 249);
-      pdf.setLineWidth(1);
-      pdf.line(14, 38, 196, 38);
-
-      // Supplier Info
-      pdf.setFontSize(16);
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(viewingOrder.companyName, 14, 48);
-
-      // Table Data
-      const tableColumn = ["Sl No", "Item Description"];
-      if (showPartNo) tableColumn.push("Part No");
-      tableColumn.push("Quantity");
-      
-      const tableRows: any[] = [];
-      
-      viewingOrder.items?.forEach((item, index) => {
-        const rowData = [
-          index + 1,
-          item.name,
-        ];
-        if (showPartNo) {
-          rowData.push(item.partNo && item.partNo !== 'N/A' ? item.partNo : '-');
-        }
-        rowData.push(item.quantity);
-        tableRows.push(rowData);
-      });
-      
-      // Generate Table
-      autoTable(pdf, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: 56,
-        margin: { top: 56, left: 14, right: 14, bottom: 35 },
-        theme: 'grid',
-        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 9, cellPadding: 3, halign: 'center' },
-        styles: { fontSize: 9, cellPadding: 3, minCellHeight: 6, lineColor: [203, 213, 225], lineWidth: 0.2, textColor: [15, 23, 42] },
-        columnStyles: {
-          0: { cellWidth: 15, halign: 'center' },
-          ...(!showPartNo ? { 2: { cellWidth: 30, halign: 'center', fontStyle: 'bold' } } : { 2: { cellWidth: 40, font: 'courier', halign: 'center' }, 3: { cellWidth: 30, halign: 'center', fontStyle: 'bold' } })
-        }
-      });
-
-      const finalY = (pdf as any).lastAutoTable.finalY || 75;
-      
       pdf.save(`PO-${viewingOrder.companyName.replace(/[^a-z0-9]/gi, '_')}.pdf`);
 
       if (shareWhatsApp) {
-        const orderDate = new Date(viewingOrder.timestamp).toLocaleDateString('en-GB');
-        let text = `*New Purchase Order*\n`;
-        text += `*Supplier:* ${viewingOrder.companyName}\n`;
-        text += `*Date:* ${orderDate}\n`;
-        text += `*Urgency:* ${viewingOrder.urgency}\n\n`;
-        text += `*Items:*\n`;
+        let message = `Hello,\n\nPlease find the purchase order details below.\n\n`;
+        message += `*Purchase Order:*\n`;
+        message += `*Company:* ${viewingOrder.companyName}\n`;
+        message += `*Date:* ${orderDate}\n`;
+        message += `*Urgency:* ${viewingOrder.urgency || 'Normal'}\n\n`;
+        message += `*Items:*\n`;
         viewingOrder.items?.forEach((item, index) => {
-          text += `${index + 1}. ${item.name} (Qty: ${item.quantity})\n`;
+          message += `${index + 1}. ${item.name} - Qty: ${item.quantity}\n`;
         });
-        text += `\n_Please find the attached PDF for full details._`;
-
-        const encodedText = encodeURIComponent(text);
-        window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
       }
     } catch (err) {
-      alert("Failed to generate PDF");
-      console.error(err);
+      console.error("Failed to generate PDF", err);
+      alert("Failed to generate PDF. Check console.");
     }
   };
 
