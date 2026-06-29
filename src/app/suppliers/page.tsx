@@ -87,44 +87,45 @@ export default function SuppliersPage() {
       <main className="main-content">
         <div style={{maxWidth: '1200px', margin: '0 auto', width: '100%'}}>
           
-          <header style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px'}}>
+          <header style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '32px'}}>
             <div>
-              <h1 className="heading-1">Suppliers (Ledgers)</h1>
-              <p className="text-muted">Master database of all party accounts and suppliers.</p>
+              <h1 className="heading-1" style={{ fontSize: '1.8rem', marginBottom: '6px' }}>Suppliers (Ledgers)</h1>
+              <p className="text-muted" style={{ fontSize: '0.95rem' }}>Master database of all party accounts and suppliers.</p>
             </div>
-            <button className="action-btn btn-primary" onClick={openNewSupplier}>
+            <button className="action-btn btn-primary" onClick={openNewSupplier} style={{ padding: '10px 20px', borderRadius: 'var(--radius-full)', fontWeight: 600, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)' }}>
               <Plus size={18} />
               New Supplier
             </button>
           </header>
 
-          <div className="card" style={{marginBottom: '24px', padding: '16px', display: 'flex', gap: '16px'}}>
-            <div style={{position: 'relative', flex: 1, maxWidth: '400px'}}>
-              <div style={{position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)'}}>
+          <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center' }}>
+            <div style={{position: 'relative', flex: 1, maxWidth: '480px'}}>
+              <div style={{position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)'}}>
                 <Search size={18} />
               </div>
               <input 
                 type="text" 
-                placeholder="Search by name, phone, or GSTIN..." 
+                placeholder="Search suppliers by name, phone, or GSTIN..." 
                 className="input-field"
-                style={{paddingLeft: '38px', width: '100%'}}
+                style={{paddingLeft: '44px', width: '100%', height: '48px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', fontSize: '0.95rem'}}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="table-container">
-            <table className="ledger-table">
-              <thead>
-                <tr>
-                  <th>Party Name</th>
-                  <th style={{width: '180px'}}>Phone</th>
-                  <th style={{width: '220px'}}>GSTIN</th>
-                  <th>City / Address</th>
-                  <th style={{width: '120px', textAlign: 'right'}}>Action</th>
-                </tr>
-              </thead>
+          <div className="card" style={{ overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+            <div className="table-container" style={{ margin: 0 }}>
+              <table className="ledger-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <th style={{ padding: '16px 20px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Party Name</th>
+                    <th style={{ padding: '16px 20px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', width: '180px' }}>Phone</th>
+                    <th style={{ padding: '16px 20px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', width: '220px' }}>GSTIN</th>
+                    <th style={{ padding: '16px 20px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>City / Address</th>
+                    <th style={{ padding: '16px 20px', textAlign: 'right', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', width: '120px' }}>Action</th>
+                  </tr>
+                </thead>
               <tbody>
                 {loading ? (
                   <tr><td colSpan={5} style={{textAlign: 'center', padding: '40px', color: 'var(--text-muted)'}}>Loading suppliers...</td></tr>
@@ -132,22 +133,24 @@ export default function SuppliersPage() {
                   <tr><td colSpan={5} style={{textAlign: 'center', padding: '40px', color: 'var(--text-muted)'}}>No suppliers found.</td></tr>
                 ) : (
                   filteredSuppliers.map(s => (
-                    <tr key={s.id} className="ledger-row">
-                      <td style={{fontWeight: 700, color: 'var(--primary)'}}>
-                        <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                          <Building size={16} style={{color: 'var(--text-faint)'}} />
+                    <tr key={s.id} className="ledger-row" style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s ease' }}>
+                      <td style={{ padding: '16px 20px', fontWeight: 600, color: '#0f172a' }}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+                            <Building size={16} />
+                          </div>
                           {s.name}
                         </div>
                       </td>
-                      <td style={{color: 'var(--text-main)', fontWeight: 500}}>{s.phone || '—'}</td>
-                      <td style={{fontFamily: 'monospace', color: 'var(--text-muted)'}}>{s.gstin || '—'}</td>
-                      <td style={{color: 'var(--text-muted)'}}>{s.address || '—'}</td>
-                      <td style={{textAlign: 'right'}}>
+                      <td style={{ padding: '16px 20px', color: '#475569', fontWeight: 500 }}>{s.phone || '—'}</td>
+                      <td style={{ padding: '16px 20px', fontFamily: 'ui-monospace, monospace', fontSize: '0.9rem', color: '#64748b' }}>{s.gstin || '—'}</td>
+                      <td style={{ padding: '16px 20px', color: '#64748b' }}>{s.address || '—'}</td>
+                      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
                         <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px'}}>
-                          <button className="action-btn" onClick={() => openEditSupplier(s)} style={{background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px'}}>
+                          <button className="action-btn" onClick={() => openEditSupplier(s)} style={{background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', cursor: 'pointer', padding: '6px', borderRadius: '6px'}} title="Edit">
                             <Edit size={16} />
                           </button>
-                          <button className="action-btn" onClick={() => handleDelete(s.id)} style={{background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '4px'}}>
+                          <button className="action-btn" onClick={() => handleDelete(s.id)} style={{background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444', cursor: 'pointer', padding: '6px', borderRadius: '6px'}} title="Delete">
                             <Trash2 size={16} />
                           </button>
                         </div>
