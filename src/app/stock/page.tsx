@@ -766,8 +766,22 @@ export default function Dashboard() {
               onClick={e => e.stopPropagation()}
               onKeyDown={e => {
                 if (e.key === 'Escape') closeSpotlight();
-                if (e.key === 'ArrowDown') { e.preventDefault(); setSpotlightIndex(i => Math.min(i + 1, spotlightResults.length - 1)); }
-                if (e.key === 'ArrowUp') { e.preventDefault(); setSpotlightIndex(i => Math.max(i - 1, 0)); }
+                if (e.key === 'ArrowDown') { 
+                  e.preventDefault(); 
+                  setSpotlightIndex(i => {
+                    const next = Math.min(i + 1, spotlightResults.length - 1);
+                    document.getElementById('spotlight-item-' + next)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    return next;
+                  }); 
+                }
+                if (e.key === 'ArrowUp') { 
+                  e.preventDefault(); 
+                  setSpotlightIndex(i => {
+                    const prev = Math.max(i - 1, 0);
+                    document.getElementById('spotlight-item-' + prev)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    return prev;
+                  }); 
+                }
                 if (e.key === 'Enter' && spotlightResults[spotlightIndex]) jumpToProduct(spotlightResults[spotlightIndex]);
               }}
               style={{ width: '100%', maxWidth: '640px', background: 'white', borderRadius: '16px', boxShadow: '0 24px 64px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #e2e8f0' }}
@@ -801,6 +815,7 @@ export default function Dashboard() {
                     {spotlightResults.map((item, i) => (
                       <div
                         key={`${item.groupIndex}-${item.productKey}`}
+                        id={`spotlight-item-${i}`}
                         onClick={() => jumpToProduct(item)}
                         onMouseEnter={() => setSpotlightIndex(i)}
                         style={{
