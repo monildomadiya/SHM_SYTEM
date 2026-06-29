@@ -202,36 +202,33 @@ export default function Dashboard() {
   const visibleRows = useMemo(() => {
     const rows: RowItem[] = [];
     
+    // Extract all individual search words from both input boxes
+    const searchTerms = [
+      ...searchQuery.toLowerCase().trim().split(/\s+/),
+      ...searchQuery2.toLowerCase().trim().split(/\s+/)
+    ].filter(Boolean);
+    
+    const isSearchActive = searchTerms.length > 0;
+
     groups.forEach((group, gIndex) => {
       if (!group) return; // Skip nulls in arrays
       
       const isExpanded = !!expandedGroups[gIndex];
       const productsList = group.products ? Object.entries(group.products) : [];
+      const groupNameStr = (group.groupName || "").toLowerCase();
       
-      // Filter products by search
+      // Filter products by checking if EVERY search term exists in the combined group + product string
       const filteredProducts = productsList.filter(([key, p]) => {
         const name = (p.productName || p.name || "").toLowerCase();
         const part = (p.partNumber || "").toLowerCase();
+        const fullString = `${groupNameStr} ${name} ${part}`;
         
-        const q1 = searchQuery.toLowerCase().trim();
-        const q2 = searchQuery2.toLowerCase().trim();
-        
-        const matchesQ1 = !q1 || name.includes(q1) || part.includes(q1);
-        const matchesQ2 = !q2 || name.includes(q2) || part.includes(q2);
-        
-        return matchesQ1 && matchesQ2;
+        return searchTerms.every(term => fullString.includes(term));
       });
 
-      const q1 = searchQuery.toLowerCase().trim();
-      const q2 = searchQuery2.toLowerCase().trim();
-      const groupName = (group.groupName || "").toLowerCase();
+      // Also check if the group name itself matches all terms (useful for empty groups)
+      const groupMatches = searchTerms.every(term => groupNameStr.includes(term));
       
-      const groupMatchesQ1 = !q1 || groupName.includes(q1);
-      const groupMatchesQ2 = !q2 || groupName.includes(q2);
-      const groupMatches = groupMatchesQ1 && groupMatchesQ2;
-      
-      const isSearchActive = !!q1 || !!q2;
-
       if (isSearchActive && !groupMatches && filteredProducts.length === 0) {
         return; // Skip this group entirely if no match
       }
