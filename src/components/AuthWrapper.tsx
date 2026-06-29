@@ -102,7 +102,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
               style={{
                 width: '100%',
                 background: 'rgba(0, 0, 0, 0.2)',
-                border: \`1px solid \${error ? '#ef4444' : 'rgba(255, 255, 255, 0.1)'}\`,
+                border: `1px solid ${error ? '#ef4444' : 'rgba(255, 255, 255, 0.1)'}`,
                 borderRadius: '12px',
                 padding: '16px 20px',
                 color: error ? '#ef4444' : 'white',
