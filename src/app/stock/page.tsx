@@ -113,6 +113,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery2, setSearchQuery2] = useState("");
   const [suppliers, setSuppliers] = useState<any[]>([]);
   
   // Cell-based focus state
@@ -211,26 +212,40 @@ export default function Dashboard() {
       const filteredProducts = productsList.filter(([key, p]) => {
         const name = (p.productName || p.name || "").toLowerCase();
         const part = (p.partNumber || "").toLowerCase();
-        const query = searchQuery.toLowerCase();
-        return name.includes(query) || part.includes(query);
+        
+        const q1 = searchQuery.toLowerCase().trim();
+        const q2 = searchQuery2.toLowerCase().trim();
+        
+        const matchesQ1 = !q1 || name.includes(q1) || part.includes(q1);
+        const matchesQ2 = !q2 || name.includes(q2) || part.includes(q2);
+        
+        return matchesQ1 && matchesQ2;
       });
 
-      const groupMatches = (group.groupName || "").toLowerCase().includes(searchQuery.toLowerCase());
+      const q1 = searchQuery.toLowerCase().trim();
+      const q2 = searchQuery2.toLowerCase().trim();
+      const groupName = (group.groupName || "").toLowerCase();
       
-      if (searchQuery && !groupMatches && filteredProducts.length === 0) {
+      const groupMatchesQ1 = !q1 || groupName.includes(q1);
+      const groupMatchesQ2 = !q2 || groupName.includes(q2);
+      const groupMatches = groupMatchesQ1 && groupMatchesQ2;
+      
+      const isSearchActive = !!q1 || !!q2;
+
+      if (isSearchActive && !groupMatches && filteredProducts.length === 0) {
         return; // Skip this group entirely if no match
       }
 
       rows.push({ type: 'group', groupIndex: gIndex, id: `g-${gIndex}` });
 
-      if (isExpanded || searchQuery) {
+      if (isExpanded || isSearchActive) {
         filteredProducts.forEach(([key, product]) => {
           rows.push({ type: 'product', groupIndex: gIndex, productKey: key, id: `p-${gIndex}-${key}`, product });
         });
       }
     });
     return rows;
-  }, [groups, expandedGroups, searchQuery]);
+  }, [groups, expandedGroups, searchQuery, searchQuery2]);
 
   // Adjust focus if visible rows change
   useEffect(() => {
@@ -345,7 +360,7 @@ export default function Dashboard() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [visibleRows, focusedCell, editingCell, editForm, searchQuery, expandedGroups]);
+  }, [visibleRows, focusedCell, editingCell, editForm, searchQuery, searchQuery2, expandedGroups]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -415,16 +430,27 @@ export default function Dashboard() {
               <span className="breadcrumb-current">Stock Summary</span>
             </div>
           </div>
-          <div className="top-bar-right">
+          <div className="top-bar-right" style={{ display: 'flex', gap: '12px' }}>
             <div className="search-container">
               <span className="search-icon" style={{display: 'flex', alignItems: 'center'}}><Search size={16} /></span>
               <input
                 id="searchInput"
                 type="text"
                 className="search-input"
-                placeholder="Search products... ('/')"
+                placeholder="Search word 1..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="search-container">
+              <span className="search-icon" style={{display: 'flex', alignItems: 'center'}}><Search size={16} /></span>
+              <input
+                id="searchInput2"
+                type="text"
+                className="search-input"
+                placeholder="Search word 2..."
+                value={searchQuery2}
+                onChange={(e) => setSearchQuery2(e.target.value)}
               />
             </div>
             <div className="top-bar-date">{new Date().toLocaleDateString('en-GB')}</div>
@@ -479,7 +505,7 @@ export default function Dashboard() {
                     visibleRows.map((row, index) => {
                       if (row.type === 'group') {
                         const group = groups[row.groupIndex];
-                        const isExpanded = !!expandedGroups[row.groupIndex] || !!searchQuery;
+                        const isExpanded = !!expandedGroups[row.groupIndex] || !!searchQuery.trim() || !!searchQuery2.trim();
                         const tProducts = group.products ? Object.keys(group.products).length : 0;
                         const dCount = tProducts || group.productCount || 0;
 
