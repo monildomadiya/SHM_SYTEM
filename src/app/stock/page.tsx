@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { ref, onValue, update, remove, push } from "firebase/database";
 import { db } from "@/lib/firebase";
 import Sidebar from "@/components/Sidebar";
-import { Menu, Search, ChevronRight, Trash2 } from "lucide-react";
+import { Menu, Search, ChevronRight, Trash2, X, Zap, Package, Filter } from "lucide-react";
 
 interface Product {
   productName?: string;
@@ -114,8 +114,16 @@ export default function Dashboard() {
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [searchQuery2, setSearchQuery2] = useState("");
+  const [groupFilter, setGroupFilter] = useState(""); // group filter dropdown
   const [suppliers, setSuppliers] = useState<any[]>([]);
-  
+
+  // Spotlight search state
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [spotlightQuery, setSpotlightQuery] = useState("");
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const spotlightRef = useRef<HTMLInputElement>(null);
+  const spotlightListRef = useRef<HTMLDivElement>(null);
+
   // Cell-based focus state
   const [focusedCell, setFocusedCell] = useState({ r: -1, c: 0 });
   const [editingCell, setEditingCell] = useState<{ r: number, c: number } | null>(null);
@@ -198,6 +206,62 @@ export default function Dashboard() {
     }
   };
 
+  // ── SPOTLIGHT SEARCH ──────────────────────────────────────────────
+  // Flat list of all products for instant O(n) search
+  const allProducts = useMemo(() => {
+    const results: { name: string; partNo: string; groupName: string; groupIndex: number; productKey: string }[] = [];
+    groups.forEach((group, gIndex) => {
+      if (!group?.products) return;
+      Object.entries(group.products).forEach(([key, p]: any) => {
+        results.push({
+          name: p.productName || p.name || '',
+          partNo: p.partNumber || '',
+          groupName: group.groupName || '',
+          groupIndex: gIndex,
+          productKey: key,
+        });
+      });
+    });
+    return results;
+  }, [groups]);
+
+  const spotlightResults = useMemo(() => {
+    const q = spotlightQuery.toLowerCase().trim();
+    if (!q) return allProducts.slice(0, 15);
+    const terms = q.split(/\s+/).filter(Boolean);
+    return allProducts
+      .filter(p => {
+        const hay = `${p.name} ${p.partNo} ${p.groupName}`.toLowerCase();
+        return terms.every(t => hay.includes(t));
+      })
+      .slice(0, 40);
+  }, [spotlightQuery, allProducts]);
+
+  const openSpotlight = () => { setSpotlightOpen(true); setSpotlightIndex(0); setTimeout(() => spotlightRef.current?.focus(), 50); };
+  const closeSpotlight = () => { setSpotlightOpen(false); setSpotlightQuery(''); setSpotlightIndex(0); };
+
+  const jumpToProduct = (item: typeof spotlightResults[0]) => {
+    setExpandedGroups(prev => ({ ...prev, [item.groupIndex]: true }));
+    setSearchQuery(item.name);
+    setSearchQuery2('');
+    closeSpotlight();
+    setTimeout(() => {
+      const el = document.getElementById(`product-row-${item.groupIndex}-${item.productKey}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+  };
+
+  const highlightText = (text: string, query: string): React.ReactNode => {
+    if (!query.trim()) return text;
+    const terms = query.trim().split(/\s+/);
+    const regex = new RegExp(`(${terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+    const parts = text.split(regex);
+    return parts.map((part, i) =>
+      regex.test(part) ? <mark key={i} style={{ background: '#fef08a', color: '#713f12', borderRadius: '2px', padding: '0 1px', fontWeight: 800 }}>{part}</mark> : part
+    );
+  };
+  // ─────────────────────────────────────────────────────────────────
+
   // Compute visible rows for keyboard navigation and rendering
   const visibleRows = useMemo(() => {
     const rows: RowItem[] = [];
@@ -208,29 +272,29 @@ export default function Dashboard() {
       ...searchQuery2.toLowerCase().trim().split(/\s+/)
     ].filter(Boolean);
     
-    const isSearchActive = searchTerms.length > 0;
+    const isSearchActive = searchTerms.length > 0 || !!groupFilter;
 
     groups.forEach((group, gIndex) => {
-      if (!group) return; // Skip nulls in arrays
+      if (!group) return;
       
+      // Group filter by dropdown
+      if (groupFilter && (group.groupName || '') !== groupFilter) return;
+
       const isExpanded = !!expandedGroups[gIndex];
       const productsList = group.products ? Object.entries(group.products) : [];
       const groupNameStr = (group.groupName || "").toLowerCase();
       
-      // Filter products by checking if EVERY search term exists in the combined group + product string
-      const filteredProducts = productsList.filter(([key, p]) => {
+      const filteredProducts = searchTerms.length > 0 ? productsList.filter(([key, p]) => {
         const name = (p.productName || p.name || "").toLowerCase();
         const part = (p.partNumber || "").toLowerCase();
         const fullString = `${groupNameStr} ${name} ${part}`;
-        
         return searchTerms.every(term => fullString.includes(term));
-      });
+      }) : productsList;
 
-      // Also check if the group name itself matches all terms (useful for empty groups)
       const groupMatches = searchTerms.every(term => groupNameStr.includes(term));
       
-      if (isSearchActive && !groupMatches && filteredProducts.length === 0) {
-        return; // Skip this group entirely if no match
+      if (isSearchActive && searchTerms.length > 0 && !groupMatches && filteredProducts.length === 0) {
+        return;
       }
 
       rows.push({ type: 'group', groupIndex: gIndex, id: `g-${gIndex}` });
@@ -275,7 +339,14 @@ export default function Dashboard() {
         return; 
       }
 
-      // Shortcut to focus search
+      // Ctrl+K → open spotlight
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        openSpotlight();
+        return;
+      }
+
+      // Shortcut to focus filter search
       if ((e.ctrlKey || e.metaKey) && e.key === 'f' || (e.key === '/' && document.activeElement?.tagName !== 'INPUT')) {
         e.preventDefault();
         document.getElementById('searchInput')?.focus();
@@ -428,6 +499,15 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="top-bar-right">
+            {/* Spotlight trigger button */}
+            <button
+              onClick={openSpotlight}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: '#64748b', fontSize: '0.8rem', fontWeight: 600, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
+            >
+              <Search size={14} />
+              <span>Quick Search</span>
+              <kbd style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '4px', padding: '1px 6px', fontSize: '0.7rem', fontFamily: 'monospace', color: '#94a3b8', marginLeft: '4px' }}>Ctrl K</kbd>
+            </button>
             <div className="top-bar-date">{new Date().toLocaleDateString('en-GB')}</div>
             <div className="user-profile"><div className="avatar">A</div></div>
           </div>
@@ -446,35 +526,48 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Advanced Search Bar */}
-          <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: 'var(--shadow-xs)', flexWrap: 'wrap' }}>
-            <Search size={15} style={{ color: '#94a3b8', flexShrink: 0 }} />
+          {/* Advanced Filter Bar */}
+          <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <Filter size={13} /> Filter
+            </div>
+            <div style={{ width: '1px', height: '20px', background: '#f1f5f9' }} />
             <input
               id="searchInput"
               type="text"
-              className="search-input"
-              placeholder="Keyword 1 (e.g. Bulb)"
+              placeholder="Product name or part no..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ flex: 1, minWidth: '140px', maxWidth: '220px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 12px', fontSize: '0.875rem', outline: 'none', color: '#0f172a' }}
+              style={{ flex: 1, minWidth: '160px', maxWidth: '260px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 12px', fontSize: '0.875rem', outline: 'none', color: '#0f172a', fontFamily: 'inherit' }}
             />
-            <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#6366f1', background: '#ede9fe', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.05em' }}>AND</span>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#6366f1', background: '#ede9fe', padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.06em' }}>AND</span>
             <input
               id="searchInput2"
               type="text"
-              className="search-input"
-              placeholder="Keyword 2 (e.g. 12v)"
+              placeholder="Second keyword..."
               value={searchQuery2}
               onChange={(e) => setSearchQuery2(e.target.value)}
-              style={{ flex: 1, minWidth: '140px', maxWidth: '220px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 12px', fontSize: '0.875rem', outline: 'none', color: '#0f172a' }}
+              style={{ flex: 1, minWidth: '140px', maxWidth: '220px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 12px', fontSize: '0.875rem', outline: 'none', color: '#0f172a', fontFamily: 'inherit' }}
             />
-            {(searchQuery || searchQuery2) && (
+            <div style={{ width: '1px', height: '20px', background: '#f1f5f9' }} />
+            <select
+              value={groupFilter}
+              onChange={e => { setGroupFilter(e.target.value); setSearchQuery(''); setSearchQuery2(''); }}
+              style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '7px 10px', fontSize: '0.875rem', outline: 'none', color: '#0f172a', cursor: 'pointer', fontFamily: 'inherit', maxWidth: '180px' }}
+            >
+              <option value="">All Groups</option>
+              {groups.filter(Boolean).map((g, i) => (
+                <option key={i} value={g.groupName}>{g.groupName}</option>
+              ))}
+            </select>
+            {(searchQuery || searchQuery2 || groupFilter) && (
               <>
-                <div style={{ height: '20px', width: '1px', background: '#e2e8f0' }} />
                 <span style={{ fontSize: '0.8rem', color: '#6366f1', fontWeight: 700 }}>
-                  {visibleRows.filter(r => r.type === 'product').length} products found
+                  {visibleRows.filter(r => r.type === 'product').length} found
                 </span>
-                <button onClick={() => { setSearchQuery(''); setSearchQuery2(''); }} style={{ background: '#fee2e2', border: 'none', color: '#ef4444', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>Clear ×</button>
+                <button onClick={() => { setSearchQuery(''); setSearchQuery2(''); setGroupFilter(''); }} style={{ background: '#fee2e2', border: 'none', color: '#ef4444', padding: '5px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <X size={12} /> Clear
+                </button>
               </>
             )}
           </div>
@@ -569,7 +662,7 @@ export default function Dashboard() {
                         const isEditingPart = editingCell?.r === index && editingCell?.c === 1;
 
                         return (
-                          <tr key={row.id} className="sub-table">
+                          <tr key={row.id} id={`product-row-${row.groupIndex}-${row.productKey}`} className="sub-table">
                             <td 
                               className={focusedCell.r === index && focusedCell.c === 0 ? 'cell-focused' : ''}
                               onClick={() => setFocusedCell({r: index, c: 0})}
@@ -638,6 +731,101 @@ export default function Dashboard() {
             onSubmit={handleQuickOrderSubmit}
           />
         )}
+
+        {/* ── SPOTLIGHT SEARCH MODAL ─────────────────────────── */}
+        {spotlightOpen && (
+          <div
+            onClick={closeSpotlight}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(6px)', zIndex: 2000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '12vh' }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              onKeyDown={e => {
+                if (e.key === 'Escape') closeSpotlight();
+                if (e.key === 'ArrowDown') { e.preventDefault(); setSpotlightIndex(i => Math.min(i + 1, spotlightResults.length - 1)); }
+                if (e.key === 'ArrowUp') { e.preventDefault(); setSpotlightIndex(i => Math.max(i - 1, 0)); }
+                if (e.key === 'Enter' && spotlightResults[spotlightIndex]) jumpToProduct(spotlightResults[spotlightIndex]);
+              }}
+              style={{ width: '100%', maxWidth: '640px', background: 'white', borderRadius: '16px', boxShadow: '0 24px 64px rgba(0,0,0,0.25)', overflow: 'hidden', border: '1px solid #e2e8f0' }}
+            >
+              {/* Search input */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid #f1f5f9' }}>
+                <Search size={18} style={{ color: '#6366f1', flexShrink: 0 }} />
+                <input
+                  ref={spotlightRef}
+                  type="text"
+                  value={spotlightQuery}
+                  onChange={e => { setSpotlightQuery(e.target.value); setSpotlightIndex(0); }}
+                  placeholder="Search any product, part number, or group..."
+                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: '1rem', fontWeight: 500, color: '#0f172a', fontFamily: 'inherit', background: 'transparent' }}
+                />
+                {spotlightQuery && (
+                  <button onClick={() => setSpotlightQuery('')} style={{ background: '#f1f5f9', border: 'none', borderRadius: '6px', padding: '4px', cursor: 'pointer', color: '#64748b', display: 'flex' }}><X size={14} /></button>
+                )}
+                <kbd onClick={closeSpotlight} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '5px', padding: '2px 8px', fontSize: '0.72rem', color: '#94a3b8', cursor: 'pointer', fontFamily: 'monospace' }}>ESC</kbd>
+              </div>
+
+              {/* Results list */}
+              <div ref={spotlightListRef} style={{ maxHeight: '460px', overflowY: 'auto' }}>
+                {spotlightResults.length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>No products found for "{spotlightQuery}"</div>
+                ) : (
+                  <>
+                    <div style={{ padding: '10px 20px 6px', fontSize: '0.7rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      {spotlightQuery ? `${spotlightResults.length} results` : 'All Products (showing 15)'}
+                    </div>
+                    {spotlightResults.map((item, i) => (
+                      <div
+                        key={`${item.groupIndex}-${item.productKey}`}
+                        onClick={() => jumpToProduct(item)}
+                        onMouseEnter={() => setSpotlightIndex(i)}
+                        style={{
+                          padding: '11px 20px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          background: i === spotlightIndex ? '#f5f3ff' : 'white',
+                          borderLeft: i === spotlightIndex ? '3px solid #6366f1' : '3px solid transparent',
+                          transition: 'background 0.1s',
+                        }}
+                      >
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ede9fe', color: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Package size={15} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {highlightText(item.name || '(No Name)', spotlightQuery)}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#6366f1', background: '#ede9fe', padding: '1px 7px', borderRadius: '4px', fontWeight: 700 }}>{item.groupName}</span>
+                            {item.partNo && <span style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace' }}>{highlightText(item.partNo, spotlightQuery)}</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                          <button
+                            onClick={e => { e.stopPropagation(); setQuickOrderProduct({ name: item.name, partNo: item.partNo }); setQuickOrderModalOpen(true); closeSpotlight(); }}
+                            style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#16a34a', padding: '4px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >+ Order</button>
+                          <button style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>Jump ↵</button>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: '10px 20px', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '16px', background: '#f8fafc' }}>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}><kbd style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '3px', padding: '1px 5px', fontFamily: 'monospace' }}>↑↓</kbd> navigate</span>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}><kbd style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '3px', padding: '1px 5px', fontFamily: 'monospace' }}>Enter</kbd> jump to product</span>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}><kbd style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '3px', padding: '1px 5px', fontFamily: 'monospace' }}>Esc</kbd> close</span>
+                <span style={{ marginLeft: 'auto', fontSize: '0.72rem', color: '#94a3b8' }}>{allProducts.length.toLocaleString()} products indexed</span>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* ────────────────────────────────────────────────────── */}
       </main>
     </div>
   );
