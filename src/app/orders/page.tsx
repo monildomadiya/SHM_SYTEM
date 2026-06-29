@@ -1062,12 +1062,8 @@ export default function OrdersPage() {
           logoImg.onload = resolve;
           logoImg.onerror = reject;
         });
-        
-        // Calculate aspect ratio (Reduced logo size)
-        const imgWidth = 25;
+        const imgWidth = 35;
         const imgHeight = (logoImg.naturalHeight * imgWidth) / logoImg.naturalWidth;
-        
-        // Convert to base64 for jsPDF
         const canvas = document.createElement('canvas');
         canvas.width = logoImg.naturalWidth;
         canvas.height = logoImg.naturalHeight;
@@ -1080,20 +1076,56 @@ export default function OrdersPage() {
       } catch (e) {
         console.error("Logo failed to load for PDF", e);
       }
-      // Remove generic header title to rely on logo
+
+      // Title & Order Info (Right aligned)
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(22);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text("PURCHASE ORDER", 196, 22, { align: 'right' });
       
-      // Date (Right aligned, vertically centered with logo)
-      const orderDate = new Date(viewingOrder.timestamp).toLocaleDateString('en-GB');
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
       pdf.setTextColor(100, 116, 139);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Date: ${orderDate}`, 210 - 14, 30, { align: 'right' });
+      const poNo = `PO-${(viewingOrder.id.split('-')[0] || viewingOrder.id).substring(0,8).toUpperCase()}`;
+      pdf.text(`PO NO: `, 160, 28, { align: 'right' });
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(poNo, 196, 28, { align: 'right' });
+
+      const orderDate = new Date(viewingOrder.timestamp).toLocaleDateString('en-GB');
+      pdf.setTextColor(100, 116, 139);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`DATE: `, 160, 34, { align: 'right' });
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(orderDate, 196, 34, { align: 'right' });
+
+      // Separator Line
+      pdf.setDrawColor(241, 245, 249);
+      pdf.setLineWidth(1);
+      pdf.line(14, 42, 196, 42);
+
+      // Supplier Info
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("TO SUPPLIER:", 14, 52);
       
-      // Separator Line (Starts after logo, slightly higher)
-      pdf.setDrawColor(226, 232, 240);
-      pdf.setLineWidth(0.5);
-      pdf.line(45, 33, 210 - 14, 33);
+      pdf.setFontSize(16);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(viewingOrder.companyName, 14, 60);
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(71, 85, 105);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Urgency: `, 14, 68);
       
+      if (viewingOrder.urgency === 'Critical') pdf.setTextColor(239, 68, 68);
+      else if (viewingOrder.urgency === 'Urgent') pdf.setTextColor(245, 158, 11);
+      else pdf.setTextColor(16, 185, 129);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(viewingOrder.urgency || 'Normal', 29, 68);
+
       // Table Data
       const tableColumn = ["Sl No", "Item Description"];
       if (showPartNo) tableColumn.push("Part No");
@@ -1117,16 +1149,46 @@ export default function OrdersPage() {
       autoTable(pdf, {
         head: [tableColumn],
         body: tableRows,
-        startY: 35,
-        margin: { top: 35, left: 10, right: 10, bottom: 5 },
+        startY: 75,
+        margin: { top: 75, left: 14, right: 14, bottom: 35 },
         theme: 'grid',
-        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 9, cellPadding: 2 },
-        styles: { fontSize: 8, cellPadding: 1.5, minCellHeight: 4, lineColor: [200, 200, 200], lineWidth: 0.1 },
+        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontSize: 9, cellPadding: 3, halign: 'center' },
+        styles: { fontSize: 9, cellPadding: 3, minCellHeight: 6, lineColor: [203, 213, 225], lineWidth: 0.2, textColor: [15, 23, 42] },
         columnStyles: {
           0: { cellWidth: 15, halign: 'center' },
-          ...(!showPartNo ? { 2: { cellWidth: 25, halign: 'center', fontStyle: 'bold' } } : { 2: { cellWidth: 40, font: 'courier', halign: 'center' }, 3: { cellWidth: 25, halign: 'center', fontStyle: 'bold' } })
+          ...(!showPartNo ? { 2: { cellWidth: 30, halign: 'center', fontStyle: 'bold' } } : { 2: { cellWidth: 40, font: 'courier', halign: 'center' }, 3: { cellWidth: 30, halign: 'center', fontStyle: 'bold' } })
         }
       });
+
+      const finalY = (pdf as any).lastAutoTable.finalY || 75;
+      const footerY = Math.max(finalY + 15, 250); 
+      // ensures footer doesn't go higher than 250 so it stays near bottom of page if table is short
+
+      if (footerY > 275) {
+        pdf.addPage();
+      }
+
+      const actualFooterY = footerY > 275 ? 250 : footerY;
+
+      // Footer - Summary Box
+      pdf.setFillColor(248, 250, 252);
+      pdf.setDrawColor(226, 232, 240);
+      pdf.roundedRect(14, actualFooterY, 60, 22, 2, 2, 'FD');
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("ORDER SUMMARY", 18, actualFooterY + 8);
+      pdf.setFontSize(12);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(`Total Items: ${viewingOrder.items?.length || 0}`, 18, actualFooterY + 17);
+
+      // Footer - Signature
+      pdf.setDrawColor(203, 213, 225);
+      pdf.line(136, actualFooterY + 12, 196, actualFooterY + 12);
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Authorized Signature", 166, actualFooterY + 17, { align: 'center' });
       
       pdf.save(`PO-${viewingOrder.companyName.replace(/[^a-z0-9]/gi, '_')}.pdf`);
 
