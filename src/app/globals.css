@@ -1146,3 +1146,12 @@ tr.sub-table:hover td {
 tr:hover .row-actions {
   opacity: 1;
 }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

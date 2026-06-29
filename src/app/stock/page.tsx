@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback, useDeferredValue, useTransition } from "react";
 import Link from "next/link";
 import { ref, onValue, update, remove, push } from "firebase/database";
 import { db } from "@/lib/firebase";
@@ -116,6 +116,12 @@ export default function Dashboard() {
   const [searchQuery2, setSearchQuery2] = useState("");
   const [groupFilter, setGroupFilter] = useState(""); // group filter dropdown
   const [suppliers, setSuppliers] = useState<any[]>([]);
+
+  // Deferred values — input stays instant, filtering runs in background
+  const deferredQuery = useDeferredValue(searchQuery);
+  const deferredQuery2 = useDeferredValue(searchQuery2);
+  const deferredGroupFilter = useDeferredValue(groupFilter);
+  const isFiltering = deferredQuery !== searchQuery || deferredQuery2 !== searchQuery2 || deferredGroupFilter !== groupFilter;
 
   // Spotlight search state
   const [spotlightOpen, setSpotlightOpen] = useState(false);
@@ -262,23 +268,23 @@ export default function Dashboard() {
   };
   // ─────────────────────────────────────────────────────────────────
 
-  // Compute visible rows for keyboard navigation and rendering
+  // Compute visible rows — uses DEFERRED values so input stays instant
   const visibleRows = useMemo(() => {
     const rows: RowItem[] = [];
     
-    // Extract all individual search words from both input boxes
+    // Use deferred (background) values for filtering
     const searchTerms = [
-      ...searchQuery.toLowerCase().trim().split(/\s+/),
-      ...searchQuery2.toLowerCase().trim().split(/\s+/)
+      ...deferredQuery.toLowerCase().trim().split(/\s+/),
+      ...deferredQuery2.toLowerCase().trim().split(/\s+/)
     ].filter(Boolean);
     
-    const isSearchActive = searchTerms.length > 0 || !!groupFilter;
+    const isSearchActive = searchTerms.length > 0 || !!deferredGroupFilter;
 
     groups.forEach((group, gIndex) => {
       if (!group) return;
       
       // Group filter by dropdown
-      if (groupFilter && (group.groupName || '') !== groupFilter) return;
+      if (deferredGroupFilter && (group.groupName || '') !== deferredGroupFilter) return;
 
       const isExpanded = !!expandedGroups[gIndex];
       const productsList = group.products ? Object.entries(group.products) : [];
@@ -306,7 +312,7 @@ export default function Dashboard() {
       }
     });
     return rows;
-  }, [groups, expandedGroups, searchQuery, searchQuery2]);
+  }, [groups, expandedGroups, deferredQuery, deferredQuery2, deferredGroupFilter]);
 
   // Adjust focus if visible rows change
   useEffect(() => {
@@ -562,9 +568,16 @@ export default function Dashboard() {
             </select>
             {(searchQuery || searchQuery2 || groupFilter) && (
               <>
-                <span style={{ fontSize: '0.8rem', color: '#6366f1', fontWeight: 700 }}>
-                  {visibleRows.filter(r => r.type === 'product').length} found
-                </span>
+                {isFiltering ? (
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: '12px', height: '12px', border: '2px solid #e2e8f0', borderTopColor: '#6366f1', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                    Searching...
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '0.8rem', color: '#6366f1', fontWeight: 700 }}>
+                    {visibleRows.filter(r => r.type === 'product').length} found
+                  </span>
+                )}
                 <button onClick={() => { setSearchQuery(''); setSearchQuery2(''); setGroupFilter(''); }} style={{ background: '#fee2e2', border: 'none', color: '#ef4444', padding: '5px 12px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <X size={12} /> Clear
                 </button>
