@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import AuthWrapper from "@/components/AuthWrapper";
+
 export const metadata: Metadata = {
   title: "SHM-SYSTEM Admin",
   description: "Admin panel for SHM-SYSTEM",
@@ -14,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <AuthWrapper>
+          {children}
+        </AuthWrapper>
       </body>
     </html>
   );
